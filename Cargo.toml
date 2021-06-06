@@ -1,0 +1,9 @@
+[package]
+name = "warthog_config"
+version = "0.1.0"
+authors = ["Alexis Jeandeau <alexis.jeandeau@gmail.com>"]
+edition = "2018"
+
+[dependencies]
+rusb = "0.8"
+byteorder = "1.4"
