@@ -27,9 +27,9 @@ jobs:
       matrix:
         target:
           - x86_64-unknown-linux-gnu
-          - x86_64-apple-darwin
-          - aarch64-apple-darwin
-          - x86_64-pc-windows-msvc
+          # - x86_64-apple-darwin
+          # - aarch64-apple-darwin
+          # - x86_64-pc-windows-msvc
     steps:
       - name: Checkout the code
         uses: actions/checkout@v2
@@ -42,18 +42,18 @@ jobs:
           override: true
       - uses: actions-rs/cargo@v1
         with:
-          use-cross: true
+          # use-cross: true
           command: build
           args: --all-features --release --target=${{ matrix.target }}
       - name: Prepare the artifact folder
         run: mkdir artifact
       - name: Prepare the artifact
-        run: cp "target/${TARGET}/warthog_config" artifact/
+        run: cp "target/${TARGET}/release/warthog_config" artifact/
         if: ${{ !contains(matrix.target, 'windows') }}
         env:
           TARGET: ${{ matrix.target }}
       - name: Prepare the artifact (Windows)
-        run: cp "target/${TARGET}/warthog_config.exe" artifact/
+        run: cp "target/${TARGET}/release/warthog_config.exe" artifact/
         if: ${{ contains(matrix.target, 'windows') }}
         env:
           TARGET: ${{ matrix.target }}
@@ -113,36 +113,36 @@ jobs:
         env:
           VERSION: ${{ steps.tagName.outputs.version }}
           TARGET: linux-x64
-      - name: Download the build artifact (macOS x64)
-        uses: actions/download-artifact@v2
-        with:
-          name: ${{ github.event.repository.name }}-x86_64-apple-darwin-${{ steps.slug.outputs.sha7 }}
-          path: release-macos-x64
-      - name: Archive the build artifact (macOS x64)
-        run: cd "release-${TARGET}" && zip -9 -r "../warthog-config-${TARGET}-${VERSION}.zip" *
-        env:
-          VERSION: ${{ steps.tagName.outputs.version }}
-          TARGET: macos-x64
-      - name: Download the build artifact (macOS ARM64)
-        uses: actions/download-artifact@v2
-        with:
-          name: ${{ github.event.repository.name }}-aarch64-apple-darwin-${{ steps.slug.outputs.sha7 }}
-          path: release-macos-arm64
-      - name: Archive the build artifact (macOS ARM64)
-        run: cd "release-${TARGET}" && zip -9 -r "../warthog-config-${TARGET}-${VERSION}.zip" *
-        env:
-          VERSION: ${{ steps.tagName.outputs.version }}
-          TARGET: macos-arm64
-      - name: Download the build artifact (Windows x64)
-        uses: actions/download-artifact@v2
-        with:
-          name: ${{ github.event.repository.name }}-x86_64-pc-windows-msvc-${{ steps.slug.outputs.sha7 }}
-          path: release-windows-x64
-      - name: Archive the build artifact (Windows x64)
-        run: cd "release-${TARGET}" && zip -9 -r "../warthog-config-${TARGET}-${VERSION}.zip" *
-        env:
-          VERSION: ${{ steps.tagName.outputs.version }}
-          TARGET: windows-x64
+      # - name: Download the build artifact (macOS x64)
+      #   uses: actions/download-artifact@v2
+      #   with:
+      #     name: ${{ github.event.repository.name }}-x86_64-apple-darwin-${{ steps.slug.outputs.sha7 }}
+      #     path: release-macos-x64
+      # - name: Archive the build artifact (macOS x64)
+      #   run: cd "release-${TARGET}" && zip -9 -r "../warthog-config-${TARGET}-${VERSION}.zip" *
+      #   env:
+      #     VERSION: ${{ steps.tagName.outputs.version }}
+      #     TARGET: macos-x64
+      # - name: Download the build artifact (macOS ARM64)
+      #   uses: actions/download-artifact@v2
+      #   with:
+      #     name: ${{ github.event.repository.name }}-aarch64-apple-darwin-${{ steps.slug.outputs.sha7 }}
+      #     path: release-macos-arm64
+      # - name: Archive the build artifact (macOS ARM64)
+      #   run: cd "release-${TARGET}" && zip -9 -r "../warthog-config-${TARGET}-${VERSION}.zip" *
+      #   env:
+      #     VERSION: ${{ steps.tagName.outputs.version }}
+      #     TARGET: macos-arm64
+      # - name: Download the build artifact (Windows x64)
+      #   uses: actions/download-artifact@v2
+      #   with:
+      #     name: ${{ github.event.repository.name }}-x86_64-pc-windows-msvc-${{ steps.slug.outputs.sha7 }}
+      #     path: release-windows-x64
+      # - name: Archive the build artifact (Windows x64)
+      #   run: cd "release-${TARGET}" && zip -9 -r "../warthog-config-${TARGET}-${VERSION}.zip" *
+      #   env:
+      #     VERSION: ${{ steps.tagName.outputs.version }}
+      #     TARGET: windows-x64
       - name: Create a new release
         uses: ncipollo/release-action@v1
         env:
