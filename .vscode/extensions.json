@@ -1,0 +1,12 @@
+{
+    "recommendations": [
+        "rust-lang.rust",
+        "dpkristensen-garmin.udev-rules",
+        "bungcip.better-toml",
+        "vadimcn.vscode-lldb",
+        "mutantdino.resourcemonitor",
+        "redhat.vscode-yaml",
+        "eamodio.gitlens",
+        "bierner.markdown-preview-github-styles"
+    ]
+}
