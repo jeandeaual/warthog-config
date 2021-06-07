@@ -89,7 +89,7 @@ jobs:
       - uses: actions-rs/clippy-check@v1
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-          args: --all-features -- -W clippy::pedantic
+          args: --all-features
   release:
     # Only release when pushing a tag
     if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')

@@ -1,3 +1,5 @@
+#![warn(clippy::pedantic)]
+
 use std::fmt;
 use clap::{Arg, App};
 use regex::Regex;
@@ -19,8 +21,8 @@ impl fmt::Debug for CustomError {
     }
 }
 
-fn main() -> Result<(), CustomError> {
-    let matches = App::new(built_info::PKG_NAME)
+fn command_line_args<'a>() -> App<'a> {
+    App::new(built_info::PKG_NAME)
         .version(built_info::PKG_VERSION)
         .author(built_info::PKG_AUTHORS)
         .about(built_info::PKG_DESCRIPTION)
@@ -59,7 +61,10 @@ fn main() -> Result<(), CustomError> {
             .short('r')
             .long("read-only")
             .about("Only show the current state, don't change the LEDs"))
-        .get_matches();
+}
+
+fn main() -> Result<(), CustomError> {
+    let matches = command_line_args().get_matches();
 
     let mut context = Context::new()
         .map_err(|err| CustomError(format!("can't create a USB context: {}", err)))?;
