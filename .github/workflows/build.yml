@@ -47,7 +47,7 @@ jobs:
           args: --all-features --release --target=${{ matrix.target }}
       - name: Get the package name
         id: package
-        run: echo "::set-output name=name::$(cargo metadata | jq -r '.packages[-1].name')"
+        run: echo "::set-output name=name::$(cargo metadata --format-version 1 | jq -r '.workspace_members[0]' | cut -d' ' -f 1)"
       - name: Prepare the artifact folder
         run: mkdir artifact
       - name: Prepare the artifact
@@ -108,7 +108,7 @@ jobs:
         run: echo "::set-output name=sha7::$(echo ${GITHUB_SHA} | cut -c1-7)"
       - name: Get the package name
         id: package
-        run: echo "::set-output name=name::$(cargo metadata | jq -r '.packages[-1].name')"
+        run: echo "::set-output name=name::$(cargo metadata --format-version 1 | jq -r '.workspace_members[0]' | cut -d' ' -f 1)"
       - uses: olegtarasov/get-tag@v2.1
         id: tagName
         with:
