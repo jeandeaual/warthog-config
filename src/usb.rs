@@ -134,14 +134,14 @@ pub fn read_interrupt<T: UsbContext>(handle: &mut DeviceHandle<T>, address: u8) 
         .map(|_| buf.to_vec())
 }
 
-pub fn write_interrupt<T: UsbContext>(handle: &mut DeviceHandle<T>, address: u8, leds: ThrottleLEDState, brightness: u8) -> Result<usize> {
+pub fn write_interrupt<T: UsbContext>(handle: &mut DeviceHandle<T>, address: u8, leds: ThrottleLEDState, intensity: u8) -> Result<usize> {
     let timeout = Duration::from_secs(1);
     let mut buf = [0_u8; PACKET_DATA_LENGTH];
 
     buf[0] = 1;
     buf[1] = 6;
     buf[2] = leds.into();
-    buf[3] = brightness;
+    buf[3] = intensity;
 
     handle.write_interrupt(address, &buf, timeout)
 }
@@ -156,6 +156,6 @@ pub fn print_data(data: Vec<u8>) {
     // Clamped to [0,5], where 0 is off and 5 is the brightest
     // Default: 1
     rdr.set_position(27);
-    let brightness = rdr.read_u8().unwrap_or_default();
-    println!("Brightness: {:?}", brightness);
+    let intensity = rdr.read_u8().unwrap_or_default();
+    println!("Intensity: {:?}", intensity);
 }
