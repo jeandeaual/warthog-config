@@ -58,7 +58,7 @@ jobs:
         env:
           TARGET: ${{ matrix.target }}
       - name: Prepare the udev rules
-        run: cp config/*.rules artifact/
+        run: cp assets/*.rules artifact/
         if: ${{ contains(matrix.target, 'linux') }}
       - name: Get the short commit SHA
         id: slug
