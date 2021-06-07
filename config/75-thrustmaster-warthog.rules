@@ -1,0 +1,4 @@
+# Thrustmaster Warthog Joystick
+# SUBSYSTEM=="usb", ATTRS{idVendor}=="044f", ATTRS{idProduct}=="0402", TAG+="uaccess"
+# Thrustmaster Warthog Throttle
+SUBSYSTEM=="usb", ATTRS{idVendor}=="044f", ATTRS{idProduct}=="0404", TAG+="uaccess"
