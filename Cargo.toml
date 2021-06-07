@@ -8,3 +8,11 @@ edition = "2018"
 rusb = "0.8"
 byteorder = "1.4"
 bitflags = "1.2"
+
+[profile.release]
+# Optimize for size
+opt-level = 'z'
+# Enable Link Time Optimization
+lto = true
+# Reduce parallel code generation units to increase optimization
+codegen-units = 1
