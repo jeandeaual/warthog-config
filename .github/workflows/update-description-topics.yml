@@ -1,0 +1,45 @@
+name: Update DockerHub description
+on:
+  push:
+    branches:
+      - master
+    paths:
+      - Cargo.toml
+      - .github/workflows/update-description-topics.yml
+jobs:
+  update-description-topics:
+    name: Update the repository description and topics
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout the code
+        uses: actions/checkout@v2
+      - name: Get the package name
+        id: package
+        run: |
+            cargo_metadata="$(cargo metadata --format-version 1)"
+            package_name="$(echo ${cargo_metadata} | jq -r '.workspace_members[0]' | cut -d' ' -f 1)"
+            echo "::set-output name=description::$(echo ${cargo_metadata} | jq -r '.packages[] | select(.name == "'"${package_name}"'") | .description')"
+            echo "::set-output name=keywords::$(echo ${cargo_metadata} | jq -c '.packages[] | select(.name == "'"${package_name}"'") | .keywords')"
+      - name: Update the description
+        uses: octokit/request-action@v2.x
+        id: update_description
+        with:
+          route: PATCH /repos/{owner}/{repo}
+          owner: ${{ github.repository_owner }}
+          repo: ${{ github.event.repository.name }}
+          description: ${{ steps.package.outputs.description }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Update the topics
+        uses: octokit/request-action@v2.x
+        id: update_topics
+        with:
+          route: PUT /repos/{owner}/{repo}/topics
+          mediaType: |
+            previews:
+              - mercy
+          owner: ${{ github.repository_owner }}
+          repo: ${{ github.event.repository.name }}
+          names: ${{ steps.package.outputs.keywords }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
