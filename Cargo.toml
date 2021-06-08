@@ -2,7 +2,8 @@
 name = "warthog-config"
 version = "0.1.0"
 description = "Command-line tool that can be used to control the LEDs of a Thrustmaster HOTAS Warthog throttle."
-keywords = ["thrustmaster", "hotas", "usb"]
+keywords = ["thrustmaster", "hotas", "warthog", "warthog-hotas"]
+categories = ["command-line-utilities"]
 authors = ["Alexis Jeandeau <alexis.jeandeau@gmail.com>"]
 edition = "2018"
 repository = "https://github.com/jeandeaual/warthog-config"
