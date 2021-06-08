@@ -123,20 +123,43 @@ pub fn configure_endpoint<T: UsbContext>(
     handle.set_alternate_setting(endpoint.iface, endpoint.setting)
 }
 
-const PACKET_DATA_LENGTH: usize = 36;
+pub const WARTHOG_PACKET_DATA_LENGTH: usize = 36;
 
-pub fn read_interrupt<T: UsbContext>(handle: &mut DeviceHandle<T>, address: u8) -> Result<Vec<u8>> {
+fn read_interrupt<T: UsbContext>(handle: &mut DeviceHandle<T>, address: u8) -> Result<Vec<u8>> {
     let timeout = Duration::from_secs(1);
-    let mut buf = [0_u8; PACKET_DATA_LENGTH];
+    let mut buf = [0_u8; WARTHOG_PACKET_DATA_LENGTH];
 
     handle
         .read_interrupt(address, &mut buf, timeout)
         .map(|_| buf.to_vec())
 }
 
-pub fn write_interrupt<T: UsbContext>(handle: &mut DeviceHandle<T>, address: u8, leds: ThrottleLEDState, intensity: u8) -> Result<usize> {
+pub fn read_warthog_throttle_config<T: UsbContext>(handle: &mut DeviceHandle<T>, address: u8) -> Result<(ThrottleLEDState, u8)> {
+    let data = read_interrupt(handle, address)?;
+
+    if cfg!(debug_assertions) {
+        println!("{:02X?}", data);
+    }
+
+    let mut rdr = Cursor::new(data);
+
+    // The LED and backlight state is the 27th byte in the packet
+    // Default: backlight only
+    rdr.set_position(26);
+    let leds = rdr.read_u8().unwrap_or_default();
+
+    // The intensity of the LEDs and backlight is the 28th byte in the packet
+    // Clamped to [0,5], where 0 is off and 5 is the brightest
+    // Default: 2
+    rdr.set_position(27);
+    let intensity = rdr.read_u8().unwrap_or_default();
+
+    Ok((leds.into(), intensity))
+}
+
+pub fn write_warthog_throttle_config<T: UsbContext>(handle: &mut DeviceHandle<T>, address: u8, leds: ThrottleLEDState, intensity: u8) -> Result<usize> {
     let timeout = Duration::from_secs(1);
-    let mut buf = [0_u8; PACKET_DATA_LENGTH];
+    let mut buf = [0_u8; WARTHOG_PACKET_DATA_LENGTH];
 
     buf[0] = 1;
     buf[1] = 6;
@@ -144,18 +167,4 @@ pub fn write_interrupt<T: UsbContext>(handle: &mut DeviceHandle<T>, address: u8,
     buf[3] = intensity;
 
     handle.write_interrupt(address, &buf, timeout)
-}
-
-pub fn print_data(data: Vec<u8>) {
-    let mut rdr = Cursor::new(data);
-
-    rdr.set_position(26);
-    let leds = rdr.read_u8().unwrap_or_default();
-    println!("LEDs: {}", ThrottleLEDState::from(leds));
-
-    // Clamped to [0,5], where 0 is off and 5 is the brightest
-    // Default: 1
-    rdr.set_position(27);
-    let intensity = rdr.read_u8().unwrap_or_default();
-    println!("Intensity: {:?}", intensity);
 }

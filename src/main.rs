@@ -118,12 +118,12 @@ fn main() -> Result<(), CustomError> {
     usb::configure_endpoint(&mut handle, &readable_endpoint)
         .map_err(|err| CustomError(format!("can't configure readable endpoint: {}", err)))?;
 
-    let data = usb::read_interrupt(&mut handle, readable_endpoint.address)
-        .map_err(|err| CustomError(format!("can't read interrupt: {}", err)))?;
-    println!("{:02X?}", data);
+    let (current_leds, current_intensity) = usb::read_warthog_throttle_config(&mut handle, readable_endpoint.address)
+        .map_err(|err| CustomError(format!("can't read the Warthog throttle configuration: {}", err)))?;
 
     println!("Current configuration:");
-    usb::print_data(data);
+    println!("LEDs: {}", current_leds);
+    println!("Intensity: {}", current_intensity);
 
     // Cleanup
     handle.release_interface(readable_endpoint.iface)
@@ -136,10 +136,6 @@ fn main() -> Result<(), CustomError> {
     if matches.is_present("read-only") {
         return Ok(())
     }
-
-    // Claim and configure the device
-    usb::configure_endpoint(&mut handle, &writable_endpoint)
-        .map_err(|err| CustomError(format!("can't configure readable endpoint: {}", err)))?;
 
     let intensity: u8 = matches.value_of_t("intensity").unwrap();
     let mut leds = warthog::ThrottleLEDState::empty();
@@ -163,9 +159,26 @@ fn main() -> Result<(), CustomError> {
         leds |= warthog::ThrottleLEDState::LED_5;
     }
 
+    println!();
+
+    if current_leds == leds && current_intensity == intensity {
+        println!("Nothing to update");
+        return Ok(())
+    }
+
+    // Claim and configure the device
+    usb::configure_endpoint(&mut handle, &writable_endpoint)
+        .map_err(|err| CustomError(format!("can't configure readable endpoint: {}", err)))?;
+
+    println!("Setting the Warthog throttle LEDs to {} and the intensity to {}...", leds, intensity);
+
     // Set the LEDs and intensity
-    usb::write_interrupt(&mut handle, writable_endpoint.address, leds, intensity)
-        .map_err(|err| CustomError(format!("can't write interrupt: {}", err)))?;
+    let wrote_size = usb::write_warthog_throttle_config(&mut handle, writable_endpoint.address, leds, intensity)
+        .map_err(|err| CustomError(format!("can't write the Warthog throttle configuration: {}", err)))?;
+
+    if wrote_size != usb::WARTHOG_PACKET_DATA_LENGTH {
+        return Err(CustomError(format!("should have written {} bytes but wrote {} bytes", usb::WARTHOG_PACKET_DATA_LENGTH, wrote_size)))
+    }
 
     // Cleanup
     handle.release_interface(writable_endpoint.iface)
@@ -174,6 +187,8 @@ fn main() -> Result<(), CustomError> {
         handle.attach_kernel_driver(writable_endpoint.iface)
             .map_err(|err| CustomError(format!("can't attach the kernel driver on the writable interface: {}", err)))?;
     }
+
+    println!("Done");
 
     Ok(())
 }
