@@ -18,14 +18,14 @@ regex = "1"
 [dependencies.clap]
 version = "3.0.0-beta.2"
 default-features = false
-features = ["std", "regex", "wrap_help"]
+features = ["std", "regex"]
 
 [build-dependencies]
 built = "0.5"
 
 [profile.release]
 # Optimize for size
-opt-level = 'z'
+opt-level = "z"
 # Enable Link Time Optimization
 lto = true
 # Reduce parallel code generation units to increase optimization
