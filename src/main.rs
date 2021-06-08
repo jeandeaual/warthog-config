@@ -119,19 +119,20 @@ fn main() -> Result<(), CustomError> {
         .map_err(|err| CustomError(format!("can't configure readable endpoint: {}", err)))?;
 
     let (current_leds, current_intensity) = usb::read_warthog_throttle_config(&mut handle, readable_endpoint.address)
-        .map_err(|err| CustomError(format!("can't read the Warthog throttle configuration: {}", err)))?;
+        .map_err(|err| {
+            // Cleanup
+            let _ = usb::release_usb_endpoint(&mut handle, readable_endpoint.iface, r_endpoint_has_kernel_driver);
+
+            CustomError(format!("can't read the Warthog throttle configuration: {}", err))
+        })?;
 
     println!("Current configuration:");
     println!("LEDs: {}", current_leds);
     println!("Intensity: {}", current_intensity);
 
     // Cleanup
-    handle.release_interface(readable_endpoint.iface)
-        .map_err(|err| CustomError(format!("can't release the readable interface: {}", err)))?;
-    if r_endpoint_has_kernel_driver {
-        handle.attach_kernel_driver(readable_endpoint.iface)
-            .map_err(|err| CustomError(format!("can't attach the kernel driver on the readable interface: {}", err)))?;
-    }
+    usb::release_usb_endpoint(&mut handle, readable_endpoint.iface, r_endpoint_has_kernel_driver)
+        .map_err(|err| CustomError(format!("can't release the readable USB endpoint: {}", err)))?;
 
     if matches.is_present("read-only") {
         return Ok(())
@@ -174,19 +175,23 @@ fn main() -> Result<(), CustomError> {
 
     // Set the LEDs and intensity
     let wrote_size = usb::write_warthog_throttle_config(&mut handle, writable_endpoint.address, leds, intensity)
-        .map_err(|err| CustomError(format!("can't write the Warthog throttle configuration: {}", err)))?;
+        .map_err(|err| {
+            // Cleanup
+            let _ = usb::release_usb_endpoint(&mut handle, writable_endpoint.iface, w_endpoint_has_kernel_driver);
+
+            CustomError(format!("can't write the Warthog throttle configuration: {}", err))
+        })?;
 
     if wrote_size != usb::WARTHOG_PACKET_DATA_LENGTH {
+        // Cleanup
+        let _ = usb::release_usb_endpoint(&mut handle, writable_endpoint.iface, w_endpoint_has_kernel_driver);
+
         return Err(CustomError(format!("should have written {} bytes but wrote {} bytes", usb::WARTHOG_PACKET_DATA_LENGTH, wrote_size)))
     }
 
     // Cleanup
-    handle.release_interface(writable_endpoint.iface)
-        .map_err(|err| CustomError(format!("can't release the writable interface: {}", err)))?;
-    if w_endpoint_has_kernel_driver {
-        handle.attach_kernel_driver(writable_endpoint.iface)
-            .map_err(|err| CustomError(format!("can't attach the kernel driver on the writable interface: {}", err)))?;
-    }
+    usb::release_usb_endpoint(&mut handle, writable_endpoint.iface, w_endpoint_has_kernel_driver)
+        .map_err(|err| CustomError(format!("can't release the writable USB endpoint: {}", err)))?;
 
     println!("Done");
 

@@ -168,3 +168,13 @@ pub fn write_warthog_throttle_config<T: UsbContext>(handle: &mut DeviceHandle<T>
 
     handle.write_interrupt(address, &buf, timeout)
 }
+
+pub fn release_usb_endpoint<T: UsbContext>(handle: &mut DeviceHandle<T>, interface: u8, has_kernel_driver: bool) -> Result<()> {
+    handle.release_interface(interface)?;
+
+    if has_kernel_driver {
+        handle.attach_kernel_driver(interface)?;
+    }
+
+    Ok(())
+}
