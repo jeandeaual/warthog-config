@@ -223,6 +223,7 @@ jobs:
       - name: Archive the build artifact (Windows x64)
         run: cd "release-${TARGET}" && zip -9 -r "../${PACKAGE_NAME}-${TARGET}-${VERSION}.zip" *
         env:
+          PACKAGE_NAME: ${{ steps.package.outputs.name }}
           VERSION: ${{ steps.tagName.outputs.version }}
           TARGET: windows-x64
       - name: Create a new release
