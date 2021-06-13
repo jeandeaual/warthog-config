@@ -19,7 +19,7 @@ regex = "1"
 [dependencies.clap]
 version = "3.0.0-beta.2"
 default-features = false
-features = ["std", "regex"]
+features = ["std", "regex", "wrap_help"]
 
 [build-dependencies]
 built = "0.5"
