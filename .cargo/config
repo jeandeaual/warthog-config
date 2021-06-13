@@ -1,3 +1,10 @@
-# Make a static binary on Windows
+# Build a static binary on Windows
 [target.x86_64-pc-windows-msvc]
+rustflags = ["-C", "target-feature=+crt-static"]
+
+# Build static binaries on macOS
+[target.x86_64-apple-darwin]
+rustflags = ["-C", "target-feature=+crt-static"]
+
+[target.aarch64-apple-darwin]
 rustflags = ["-C", "target-feature=+crt-static"]
