@@ -27,24 +27,19 @@ jobs:
       matrix:
         target:
           - x86_64-unknown-linux-gnu
-          # - x86_64-apple-darwin
-          # - aarch64-apple-darwin
-          # - x86_64-pc-windows-msvc
     steps:
       - name: Checkout the code
         uses: actions/checkout@v2
         with:
           persist-credentials: false
-      - uses: actions-rs/toolchain@v1
+      - name: Install the Rust toolchain
+        uses: actions-rs/toolchain@v1
         with:
           toolchain: stable
           target: ${{ matrix.target }}
           override: true
-      - uses: actions-rs/cargo@v1
-        with:
-          # use-cross: true
-          command: build
-          args: --all-features --release --target=${{ matrix.target }}
+      - name: Build
+        run: cargo build --release --target=${{ matrix.target }}
       - name: Get the package name
         id: package
         run: echo "::set-output name=name::$(cargo metadata --format-version 1 | jq -r '.workspace_members[0]' | cut -d' ' -f 1)"
@@ -89,7 +84,6 @@ jobs:
       - uses: actions-rs/clippy-check@v1
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-          args: --all-features
   release:
     # Only release when pushing a tag
     if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
@@ -116,7 +110,7 @@ jobs:
       - name: Download the build artifact (Linux x64)
         uses: actions/download-artifact@v2
         with:
-          name: ${{ steps.package.outputs.name }}-x86_64-unknown-linux-gnu-${{ steps.slug.outputs.sha7 }}
+          name: ${{ steps.package.outputs.name }}-x86_64-unknown-linux-musl-${{ steps.slug.outputs.sha7 }}
           path: release-linux-x64
       - name: Archive the build artifact (Linux x64)
         run: tar -cvzf "${PACKAGE_NAME}-${TARGET}-${VERSION}.tar.gz" "release-${TARGET}"/*

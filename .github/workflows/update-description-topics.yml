@@ -18,7 +18,7 @@ jobs:
         run: |
             cargo_metadata="$(cargo metadata --format-version 1)"
             package_name="$(echo ${cargo_metadata} | jq -r '.workspace_members[0]' | cut -d' ' -f 1)"
-            echo "::set-output name=description::$(echo ${cargo_metadata} | jq -r '.packages[] | select(.name == "'"${package_name}"'") | .description')"
+            echo "::set-output name=description::$(echo ${cargo_metadata} | jq -c '.packages[] | select(.name == "'"${package_name}"'") | .description')"
             echo "::set-output name=keywords::$(echo ${cargo_metadata} | jq -c '.packages[] | select(.name == "'"${package_name}"'") | .keywords')"
       - name: Update the description
         uses: octokit/request-action@v2.x

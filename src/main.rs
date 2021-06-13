@@ -73,14 +73,14 @@ fn main() -> Result<(), CustomError> {
     let (mut device, mut handle) = usb::open_device(
         &mut context,
         warthog::VID,
-        warthog::THROTTLE_PID
+        warthog::THROTTLE_PID,
     ).expect("Failed to open the Warthog throttle. Is it connected?");
 
     println!(
-        "Found Warthog throttle on bus {}.{}.{}",
+        "Found Warthog throttle on endpoint {}.{}.{}",
         device.bus_number(),
         device.address(),
-        device.port_number()
+        device.port_number(),
     );
 
     if cfg!(debug_assertions) {
