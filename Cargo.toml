@@ -11,7 +11,7 @@ license = "MIT"
 build = "build.rs"
 
 [dependencies]
-rusb = "0.8"
+rusb = "0.9"
 byteorder = "1.4"
 bitflags = "1.2"
 regex = "1"
