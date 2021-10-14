@@ -45,7 +45,7 @@ OPTIONS:
 * Set the backlight and LEDs 1 and 3 with an intensity of 5
 
     ```sh
-    ./warthog-config -b -1 -3 -i 5
+    ./warthog-config -b13 -i 5
     ```
 
 * Set only LED 2 with the default intensity
