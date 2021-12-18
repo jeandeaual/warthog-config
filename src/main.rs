@@ -53,7 +53,7 @@ fn command_line_args<'a>() -> App<'a> {
         .arg(Arg::new("intensity")
             .short('i')
             .long("intensity")
-            .validator_regex(Regex::new("[0-5]").unwrap(), "must be between 0 and 5")
+            .validator_regex(Regex::new("^[0-5]$").unwrap(), "must be between 0 and 5")
             .takes_value(true)
             .default_value("2")
             .about("Set the intensity of the backlight (0-5, where 0 in off and 5 is the brightest)"))
