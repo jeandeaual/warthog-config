@@ -1,17 +1,12 @@
 #![warn(clippy::pedantic)]
 
-use std::fmt;
-use clap::{Arg, App};
+use clap::{app_from_crate, App, Arg};
 use regex::Regex;
 use rusb::Context;
+use std::{fmt, include_str};
 
 mod usb;
 mod warthog;
-
-pub mod built_info {
-   // The file has been placed there by the build script.
-   include!(concat!(env!("OUT_DIR"), "/built.rs"));
-}
 
 struct CustomError(String);
 
@@ -21,60 +16,78 @@ impl fmt::Debug for CustomError {
     }
 }
 
-fn command_line_args<'a>() -> App<'a> {
-    App::new(built_info::PKG_NAME)
-        .version(built_info::PKG_VERSION)
-        .author(built_info::PKG_AUTHORS)
-        .about(built_info::PKG_DESCRIPTION)
+// Trigger a re-build automatically when Cargo.toml changes
+const _: &'static str = include_str!("../Cargo.toml");
+
+fn app<'a>() -> App<'a> {
+    app_from_crate!()
+        // .subcommands(vec![
+        //     App::new("b1")
+        //         .about("blah b1")
+        //         .arg(Arg::new("test").short('t')),
+        //     App::new("a1")
+        //         .about("blah a1")
+        //         .arg(Arg::new("roster").short('r')),
+        //         .arg(Arg::new("intensity")
+        //             .short('i')
+        //             .long("intensity")
+        //             .validator_regex(Regex::new("^(1?[0-9]?0|2[0-5]0)$").unwrap(), "must be between 0 and 250, by increments of 10")
+        //             .takes_value(true)
+        //             .default_value("120")
+        //             .about("Set the intensity of the backlight (0-250, by increments of 10, where 0 in off and 250 is the brightest)"))
+        // ]);
         .arg(Arg::new("backlight")
             .short('b')
             .long("backlight")
-            .about("Turn the backlight on"))
+            .help("Turn the backlight on"))
         .arg(Arg::new("led-1")
             .short('1')
             .long("led-1")
-            .about("Turn the first LED on"))
+            .help("Turn the first LED on"))
         .arg(Arg::new("led-2")
             .short('2')
             .long("led-2")
-            .about("Turn the second LED on"))
+            .help("Turn the second LED on"))
         .arg(Arg::new("led-3")
             .short('3')
             .long("led-3")
-            .about("Turn the third LED on"))
+            .help("Turn the third LED on"))
         .arg(Arg::new("led-4")
             .short('4')
             .long("led-4")
-            .about("Turn the fourth LED on"))
+            .help("Turn the fourth LED on"))
         .arg(Arg::new("led-5")
             .short('5')
             .long("led-5")
-            .about("Turn the fifth LED on"))
+            .help("Turn the fifth LED on"))
         .arg(Arg::new("intensity")
             .short('i')
             .long("intensity")
             .validator_regex(Regex::new("^[0-5]$").unwrap(), "must be between 0 and 5")
             .takes_value(true)
             .default_value("2")
-            .about("Set the intensity of the backlight (0-5, where 0 in off and 5 is the brightest)"))
+            .help("Set the intensity of the backlight (0-5, where 0 in off and 5 is the brightest)"))
         .arg(Arg::new("read-only")
             .short('r')
             .long("read-only")
-            .about("Only show the current state, don't change the LEDs"))
+            .help("Only show the current state, don't change the LEDs"))
+}
+
+#[test]
+fn verify_app() {
+    app().debug_assert();
 }
 
 fn main() -> Result<(), CustomError> {
-    let matches = command_line_args().get_matches();
+    let matches = app().get_matches();
 
     let mut context = Context::new()
         .map_err(|err| CustomError(format!("can't create a USB context: {}", err)))?;
 
     // Open the USB device
-    let (mut device, mut handle) = usb::open_device(
-        &mut context,
-        warthog::VID,
-        warthog::THROTTLE_PID,
-    ).expect("Failed to open the Warthog throttle. Is it connected?");
+    let (mut device, mut handle) =
+        usb::open_device(&mut context, warthog::VID, warthog::THROTTLE_PID)
+            .expect("Failed to open the Warthog throttle. Is it connected?");
 
     println!(
         "Found Warthog throttle on endpoint {}.{}.{}",
@@ -135,7 +148,7 @@ fn main() -> Result<(), CustomError> {
         .map_err(|err| CustomError(format!("can't release the readable USB endpoint: {}", err)))?;
 
     if matches.is_present("read-only") {
-        return Ok(())
+        return Ok(());
     }
 
     let intensity: u8 = matches.value_of_t("intensity").unwrap();
@@ -164,7 +177,7 @@ fn main() -> Result<(), CustomError> {
 
     if current_leds == leds && current_intensity == intensity {
         println!("Nothing to update");
-        return Ok(())
+        return Ok(());
     }
 
     // Claim and configure the device

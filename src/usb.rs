@@ -68,7 +68,9 @@ pub struct Endpoint {
 }
 
 // returns all readable endpoints for given usb device and descriptor
-pub fn find_endpoints<T: UsbContext>(device: &mut Device<T>) -> Result<(Vec<Endpoint>, Vec<Endpoint>)> {
+pub fn find_endpoints<T: UsbContext>(
+    device: &mut Device<T>,
+) -> Result<(Vec<Endpoint>, Vec<Endpoint>)> {
     let device_desc = device.device_descriptor()?;
     let mut readable_endpoints = vec![];
     let mut writable_endpoints = vec![];
@@ -124,6 +126,7 @@ pub fn configure_endpoint<T: UsbContext>(
 }
 
 pub const WARTHOG_PACKET_DATA_LENGTH: usize = 36;
+// pub const MFD_PACKET_DATA_LENGTH: usize = 2;
 
 fn read_interrupt<T: UsbContext>(handle: &mut DeviceHandle<T>, address: u8) -> Result<Vec<u8>> {
     let timeout = Duration::from_secs(1);
@@ -134,7 +137,10 @@ fn read_interrupt<T: UsbContext>(handle: &mut DeviceHandle<T>, address: u8) -> R
         .map(|_| buf.to_vec())
 }
 
-pub fn read_warthog_throttle_config<T: UsbContext>(handle: &mut DeviceHandle<T>, address: u8) -> Result<(ThrottleLEDState, u8)> {
+pub fn read_warthog_throttle_config<T: UsbContext>(
+    handle: &mut DeviceHandle<T>,
+    address: u8,
+) -> Result<(ThrottleLEDState, u8)> {
     let data = read_interrupt(handle, address)?;
 
     if cfg!(debug_assertions) {
@@ -157,7 +163,12 @@ pub fn read_warthog_throttle_config<T: UsbContext>(handle: &mut DeviceHandle<T>,
     Ok((leds.into(), intensity))
 }
 
-pub fn write_warthog_throttle_config<T: UsbContext>(handle: &mut DeviceHandle<T>, address: u8, leds: ThrottleLEDState, intensity: u8) -> Result<usize> {
+pub fn write_warthog_throttle_config<T: UsbContext>(
+    handle: &mut DeviceHandle<T>,
+    address: u8,
+    leds: ThrottleLEDState,
+    intensity: u8,
+) -> Result<usize> {
     let timeout = Duration::from_secs(1);
     let mut buf = [0_u8; WARTHOG_PACKET_DATA_LENGTH];
 
@@ -169,7 +180,30 @@ pub fn write_warthog_throttle_config<T: UsbContext>(handle: &mut DeviceHandle<T>
     handle.write_interrupt(address, &buf, timeout)
 }
 
-pub fn release_usb_endpoint<T: UsbContext>(handle: &mut DeviceHandle<T>, interface: u8, has_kernel_driver: bool) -> Result<()> {
+// pub fn write_mfd_led_state<T: UsbContext>(handle: &mut DeviceHandle<T>, address: u8, leds: MFDLEDState) -> Result<usize> {
+//     let timeout = Duration::from_secs(1);
+//     let mut buf = [0_u8; MFD_PACKET_DATA_LENGTH];
+
+//     buf[0] = leds.into();
+
+//     handle.write_interrupt(address, &buf, timeout)
+// }
+
+// pub fn write_mfd_led_intensity<T: UsbContext>(handle: &mut DeviceHandle<T>, address: u8, intensity: u8) -> Result<usize> {
+//     let timeout = Duration::from_secs(1);
+//     let mut buf = [0_u8; MFD_PACKET_DATA_LENGTH];
+
+//     buf[0] = intensity;
+//     buf[1] = 1;
+
+//     handle.write_interrupt(address, &buf, timeout)
+// }
+
+pub fn release_usb_endpoint<T: UsbContext>(
+    handle: &mut DeviceHandle<T>,
+    interface: u8,
+    has_kernel_driver: bool,
+) -> Result<()> {
     handle.release_interface(interface)?;
 
     if has_kernel_driver {

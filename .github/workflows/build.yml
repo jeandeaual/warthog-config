@@ -35,12 +35,15 @@ jobs:
       - name: Install the Rust toolchain
         uses: actions-rs/toolchain@v1
         with:
+          profile: minimal
           toolchain: stable
-          default: true
           target: ${{ matrix.target }}
           override: true
       - name: Build
-        run: cargo build --release --target=${{ matrix.target }}
+        uses: actions-rs/cargo@v1
+        with:
+          command: build
+          args: --release --target=${{ matrix.target }}
       - name: Get the package name
         id: package
         run: echo "::set-output name=name::$(cargo metadata --format-version 1 | jq -r '.workspace_members[0]' | cut -d' ' -f 1)"
@@ -84,12 +87,15 @@ jobs:
       - name: Install the Rust toolchain
         uses: actions-rs/toolchain@v1
         with:
+          profile: minimal
           toolchain: stable
-          default: true
           target: ${{ matrix.target }}
           override: true
       - name: Build
-        run: cargo build --release --target=${{ matrix.target }}
+        uses: actions-rs/cargo@v1
+        with:
+          command: build
+          args: --release --target=${{ matrix.target }}
       - name: Get the package name
         id: package
         run: echo "::set-output name=name::$(cargo metadata --format-version 1 | jq -r '.workspace_members[0]' | cut -d' ' -f 1)"
@@ -128,12 +134,15 @@ jobs:
       - name: Install the Rust toolchain
         uses: actions-rs/toolchain@v1
         with:
+          profile: minimal
           toolchain: stable
-          default: true
           target: ${{ matrix.target }}
           override: true
       - name: Build
-        run: cargo build --release --target=${{ matrix.target }}
+        uses: actions-rs/cargo@v1
+        with:
+          command: build
+          args: --release --target=${{ matrix.target }}
       - name: Get the package name
         id: package
         run: echo "::set-output name=name::$(cargo metadata --format-version 1 | jq -r '.workspace_members[0]' | %{ $_.split(" ")[0] })"
@@ -160,14 +169,40 @@ jobs:
         uses: actions/checkout@v2
         with:
           persist-credentials: false
-      - uses: actions-rs/toolchain@v1
+      - name: Install the Rust toolchain
+        uses: actions-rs/toolchain@v1
         with:
-            toolchain: stable
-            components: clippy
-            override: true
-      - uses: actions-rs/clippy-check@v1
+          profile: minimal
+          toolchain: stable
+          components: rustfmt, clippy
+          override: true
+      - name: Check if the code is properly formatted
+        uses: actions-rs/cargo@v1
+        with:
+          command: fmt
+          args: -- --check
+      - name: Clippy check
+        uses: actions-rs/clippy-check@v1
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout the code
+        uses: actions/checkout@v2
+        with:
+          persist-credentials: false
+      - name: Install the Rust toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: stable
+          override: true
+      - name: Test
+        uses: actions-rs/cargo@v1
+        with:
+          command: test
   release:
     # Only release when pushing a tag
     if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
@@ -189,7 +224,8 @@ jobs:
       - name: Get the package name
         id: package
         run: echo "::set-output name=name::$(cargo metadata --format-version 1 | jq -r '.workspace_members[0]' | cut -d' ' -f 1)"
-      - uses: olegtarasov/get-tag@v2.1
+      - name: Get the current Git tag
+        uses: olegtarasov/get-tag@v2.1
         id: tagName
         with:
           tagRegex: "v(?<version>.*)"
