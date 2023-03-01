@@ -22,7 +22,7 @@ default-features = false
 features = ["std", "regex", "wrap_help"]
 
 [build-dependencies]
-built = "0.5"
+built = "0.6"
 
 [profile.release]
 # Optimize for size
